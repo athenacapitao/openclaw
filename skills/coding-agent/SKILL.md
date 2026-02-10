@@ -157,13 +157,38 @@ gh pr comment <PR#> --body "<review content>"
 
 ## Claude Code
 
-```bash
-# With PTY for proper terminal output
-bash pty:true workdir:~/project command:"claude 'Your task'"
+**Recommended Workflow (tested 2026-02-10):**
 
-# Background
-bash pty:true workdir:~/project background:true command:"claude 'Your task'"
+```bash
+# 1. Start Claude Code in target directory (interactive mode)
+bash pty:true workdir:/path/to/project background:true command:"claude"
+# Returns sessionId for tracking
+
+# 2. Interact with Claude Code via process tool
+process action:write sessionId:XXX data:"Create a file explaining hello world"
+process action:submit sessionId:XXX data:"yes"  # Send + Enter
+
+# 3. Monitor progress
+process action:log sessionId:XXX
+
+# 4. When done, kill the session
+process action:kill sessionId:XXX
 ```
+
+**For one-shot commands:**
+
+```bash
+# Quick one-liner (non-interactive, prints output)
+bash pty:true workdir:~/project command:"claude --print 'Your task'"
+```
+
+**Key Workflow Rules:**
+
+- **Always start in project directory** - `workdir:/path/to/project`
+- **Use `pty:true`** - Claude Code needs a pseudo-terminal
+- **Interactive mode** - Run just `claude` without flags for full interaction
+- **Chain commands** - Can run multiple git commands: `git add file && git commit -m "msg" && git push`
+- **Use for coding projects** - Building features, apps, tools, GitHub operations
 
 ---
 
