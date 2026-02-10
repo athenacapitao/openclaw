@@ -190,6 +190,43 @@ bash pty:true workdir:~/project command:"claude --print 'Your task'"
 - **Chain commands** - Can run multiple git commands: `git add file && git commit -m "msg" && git push`
 - **Use for coding projects** - Building features, apps, tools, GitHub operations
 
+**Top 5 Essential Claude Code Commands:**
+
+1. **`/compact`** — Compress Your Context
+   - **WHY:** Claude Code has a finite context window. As your conversation grows, Claude's performance degrades.
+   - **WHEN:** Every 15-20 minutes on complex tasks, or before starting a new sub-task
+   - **HOW:** Just type `/compact` during a session
+
+2. **`/clear`** — Start Fresh
+   - **WHY:** Leftover context from unrelated tasks causes "context rot"
+   - **WHEN:** Every time you switch to a new, unrelated task, or when Claude seems confused
+   - **HOW:** Just type `/clear`
+
+3. **`/init`** — Set Up Your Project Memory
+   - **WHY:** Creates (or updates) a CLAUDE.md file in your project root — Claude's memory of your project
+   - **WHEN:** First time using Claude Code in a project, or after major architectural changes
+   - **HOW:** Just type `/init`
+
+4. **`/model`** — Switch Models on the Fly
+   - **WHY:** Not every task needs your most expensive model. Optimize for speed/quality.
+   - **WHEN:**
+     - Switch to Haiku for quick, repetitive tasks (generating tests, formatting)
+     - Switch to Opus for complex reasoning, architecture decisions, or tricky debugging
+   - **HOW:** Type `/model` and select from available models (Sonnet, Haiku, Opus)
+
+5. **`/help`** — Discover Everything Available
+   - **WHY:** Shows all your custom commands from `.claude/commands/`, skills from `.claude/skills/`, and MCP servers
+   - **WHEN:** When you're new to Claude Code, or after installing plugins/commands
+   - **HOW:** Just type `/help`
+
+**Bonus Tips:**
+
+- Shift+Tab → Toggle between permission modes
+- Tab → Toggle thinking visibility
+- # followed by text → Quickly add to Claude's memory
+- Cmd+P → Model picker
+- Full docs: code.claude.com/docs/en/slash-commands
+
 ---
 
 ## OpenCode
