@@ -7,9 +7,11 @@ metadata:
   }
 ---
 
-# Coding Agent (bash-first)
+# Coding Agent (exec-first)
 
-Use **bash** (with optional background mode) for all coding agent work. Simple and effective.
+Use **exec** (with optional background mode) for all coding agent work. Simple and effective.
+
+**Critical Note:** Always use the `exec` tool, NOT the `bash` tool. The exec tool handles parameters correctly.
 
 ## ⚠️ PTY Mode Required!
 
@@ -17,15 +19,44 @@ Coding agents (Codex, Claude Code, Pi) are **interactive terminal applications**
 
 **Always use `pty:true`** when running coding agents:
 
-```bash
-# ✅ Correct - with PTY
-bash pty:true command:"codex exec 'Your prompt'"
+## ⚠️ CRITICAL: Never Use Systemd User Commands in Claude Code!
 
-# ❌ Wrong - no PTY, agent may break
-bash command:"codex exec 'Your prompt'"
+**Systemd user commands WILL FAIL** in Claude Code background PTY sessions because they require:
+
+- `DBUS_SESSION_BUS_ADDRESS` environment variable
+- `XDG_RUNTIME_DIR` environment variable
+
+These are automatically set in interactive shells but NOT in background PTY sessions.
+
+**What happens:**
+
+```bash
+# In Claude Code session - this FAILS
+systemctl --user status athena-tasks
+# Error: Failed to connect to bus: No medium found
 ```
 
-### Bash Tool Parameters
+**Rule:** **NEVER use systemd user commands in Claude Code sessions.**
+
+**Solution:** Handle systemd commands separately (outside Claude Code) or prefix with proper environment:
+
+```bash
+# Direct execution (outside Claude Code)
+XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user daemon-reload
+XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user start athena-tasks
+```
+
+**Learned:** 2026-02-10 - Claude Code systemd bus issue when completing athena-tasks Phase 1
+
+```bash
+# ✅ Correct - with PTY
+exec pty:true command:"codex exec 'Your prompt'"
+
+# ❌ Wrong - no PTY, agent may break
+exec command:"codex exec 'Your prompt'"
+```
+
+### Exec Tool Parameters
 
 | Parameter    | Type    | Description                                                                 |
 | ------------ | ------- | --------------------------------------------------------------------------- |
@@ -60,7 +91,7 @@ For quick prompts/chats, create a temp git repo and run:
 SCRATCH=$(mktemp -d) && cd $SCRATCH && git init && codex exec "Your prompt here"
 
 # Or in a real project - with PTY!
-bash pty:true workdir:~/Projects/myproject command:"codex exec 'Add error handling to the API calls'"
+exec pty:true workdir:~/Projects/myproject command:"codex exec 'Add error handling to the API calls'"
 ```
 
 **Why git init?** Codex refuses to run outside a trusted git directory. Creating a temp repo solves this for scratch work.
@@ -72,8 +103,11 @@ bash pty:true workdir:~/Projects/myproject command:"codex exec 'Add error handli
 For longer tasks, use background mode with PTY:
 
 ```bash
+# Ensure directory exists (CRITICAL)
+mkdir -p ~/project
+
 # Start agent in target directory (with PTY!)
-bash pty:true workdir:~/project background:true command:"codex exec --full-auto 'Build a snake game'"
+exec pty:true workdir:~/project background:true command:"codex exec --full-auto 'Build a snake game'"
 # Returns sessionId for tracking
 
 # Monitor progress
@@ -111,11 +145,14 @@ process action:kill sessionId:XXX
 ### Building/Creating
 
 ```bash
+# Ensure directory exists first!
+mkdir -p ~/project
+
 # Quick one-shot (auto-approves) - remember PTY!
-bash pty:true workdir:~/project command:"codex exec --full-auto 'Build a dark mode toggle'"
+exec pty:true workdir:~/project command:"codex exec --full-auto 'Build a dark mode toggle'"
 
 # Background for longer work
-bash pty:true workdir:~/project background:true command:"codex --yolo 'Refactor the auth module'"
+exec pty:true workdir:~/project background:true command:"codex --yolo 'Refactor the auth module'"
 ```
 
 ### Reviewing PRs
@@ -128,23 +165,26 @@ Clone to temp folder or use git worktree.
 REVIEW_DIR=$(mktemp -d)
 git clone https://github.com/user/repo.git $REVIEW_DIR
 cd $REVIEW_DIR && gh pr checkout 130
-bash pty:true workdir:$REVIEW_DIR command:"codex review --base origin/main"
+exec pty:true workdir:$REVIEW_DIR command:"codex review --base origin/main"
 # Clean up after: trash $REVIEW_DIR
 
 # Or use git worktree (keeps main intact)
 git worktree add /tmp/pr-130-review pr-130-branch
-bash pty:true workdir:/tmp/pr-130-review command:"codex review --base main"
+exec pty:true workdir:/tmp/pr-130-review command:"codex review --base main"
 ```
 
 ### Batch PR Reviews (parallel army!)
 
 ```bash
+# Ensure directory exists first!
+mkdir -p ~/project
+
 # Fetch all PR refs first
 git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*'
 
 # Deploy the army - one Codex per PR (all with PTY!)
-bash pty:true workdir:~/project background:true command:"codex exec 'Review PR #86. git diff origin/main...origin/pr/86'"
-bash pty:true workdir:~/project background:true command:"codex exec 'Review PR #87. git diff origin/main...origin/pr/87'"
+exec pty:true workdir:~/project background:true command:"codex exec 'Review PR #86. git diff origin/main...origin/pr/86'"
+exec pty:true workdir:~/project background:true command:"codex exec 'Review PR #87. git diff origin/main...origin/pr/87'"
 
 # Monitor all
 process action:list
@@ -160,8 +200,11 @@ gh pr comment <PR#> --body "<review content>"
 **Recommended Workflow (tested 2026-02-10):**
 
 ```bash
+# 0. Ensure directory exists (CRITICAL)
+mkdir -p /path/to/project
+
 # 1. Start Claude Code in target directory (interactive mode)
-bash pty:true workdir:/path/to/project background:true command:"claude"
+exec pty:true workdir:/path/to/project background:true command:"claude"
 # Returns sessionId for tracking
 
 # 2. Interact with Claude Code via process tool
@@ -178,8 +221,11 @@ process action:kill sessionId:XXX
 **For one-shot commands:**
 
 ```bash
+# Ensure directory exists first!
+mkdir -p ~/project
+
 # Quick one-liner (non-interactive, prints output)
-bash pty:true workdir:~/project command:"claude --print 'Your task'"
+exec pty:true workdir:~/project command:"claude --print 'Your task'"
 ```
 
 **Key Workflow Rules:**
@@ -232,7 +278,8 @@ bash pty:true workdir:~/project command:"claude --print 'Your task'"
 ## OpenCode
 
 ```bash
-bash pty:true workdir:~/project command:"opencode run 'Your task'"
+mkdir -p ~/project
+exec pty:true workdir:~/project command:"opencode run 'Your task'"
 ```
 
 ---
@@ -241,13 +288,14 @@ bash pty:true workdir:~/project command:"opencode run 'Your task'"
 
 ```bash
 # Install: npm install -g @mariozechner/pi-coding-agent
-bash pty:true workdir:~/project command:"pi 'Your task'"
+mkdir -p ~/project
+exec pty:true workdir:~/project command:"pi 'Your task'"
 
 # Non-interactive mode (PTY still recommended)
-bash pty:true command:"pi -p 'Summarize src/'"
+exec pty:true command:"pi -p 'Summarize src/'"
 
 # Different provider/model
-bash pty:true command:"pi --provider openai --model gpt-4o-mini -p 'Your task'"
+exec pty:true command:"pi --provider openai --model gpt-4o-mini -p 'Your task'"
 ```
 
 **Note:** Pi now has Anthropic prompt caching enabled (PR #584, merged Jan 2026)!
@@ -264,8 +312,8 @@ git worktree add -b fix/issue-78 /tmp/issue-78 main
 git worktree add -b fix/issue-99 /tmp/issue-99 main
 
 # 2. Launch Codex in each (background + PTY!)
-bash pty:true workdir:/tmp/issue-78 background:true command:"pnpm install && codex --yolo 'Fix issue #78: <description>. Commit and push.'"
-bash pty:true workdir:/tmp/issue-99 background:true command:"pnpm install && codex --yolo 'Fix issue #99: <description>. Commit and push.'"
+exec pty:true workdir:/tmp/issue-78 background:true command:"pnpm install && codex --yolo 'Fix issue #78: <description>. Commit and push.'"
+exec pty:true workdir:/tmp/issue-99 background:true command:"pnpm install && codex --yolo 'Fix issue #99: <description>. Commit and push.'"
 
 # 3. Monitor progress
 process action:list
@@ -285,16 +333,18 @@ git worktree remove /tmp/issue-99
 ## ⚠️ Rules
 
 1. **Always use pty:true** - coding agents need a terminal!
-2. **Respect tool choice** - if user asks for Codex, use Codex.
+2. **Always use exec tool, not bash** - `exec pty:true workdir:/path/to/project`
+3. **Always create directory first** - `mkdir -p /path/to/project` before running exec
+4. **Respect tool choice** - if user asks for Codex, use Codex.
    - Orchestrator mode: do NOT hand-code patches yourself.
    - If an agent fails/hangs, respawn it or ask the user for direction, but don't silently take over.
-3. **Be patient** - don't kill sessions because they're "slow"
-4. **Monitor with process:log** - check progress without interfering
-5. **--full-auto for building** - auto-approves changes
-6. **vanilla for reviewing** - no special flags needed
-7. **Parallel is OK** - run many Codex processes at once for batch work
-8. **NEVER start Codex in ~/clawd/** - it'll read your soul docs and get weird ideas about the org chart!
-9. **NEVER checkout branches in ~/Projects/openclaw/** - that's the LIVE OpenClaw instance!
+5. **Be patient** - don't kill sessions because they're "slow"
+6. **Monitor with process:log** - check progress without interfering
+7. **--full-auto for building** - auto-approves changes
+8. **vanilla for reviewing** - no special flags needed
+9. **Parallel is OK** - run many Codex processes at once for batch work
+10. **NEVER start Codex in ~/clawd/** - it'll read your soul docs and get weird ideas about the org chart!
+11. **NEVER checkout branches in ~/Projects/openclaw/** - that's the LIVE OpenClaw instance!
 
 ---
 
@@ -328,7 +378,8 @@ openclaw gateway wake --text "Done: [brief summary of what was built]" --mode no
 **Example:**
 
 ```bash
-bash pty:true workdir:~/project background:true command:"codex --yolo exec 'Build a REST API for todos.
+mkdir -p ~/project
+exec pty:true workdir:~/project background:true command:"codex --yolo exec 'Build a REST API for todos.
 
 When completely finished, run: openclaw gateway wake --text \"Done: Built todos REST API with CRUD endpoints\" --mode now'"
 ```
@@ -341,6 +392,78 @@ This triggers an immediate wake event — Skippy gets pinged in seconds, not 10 
 
 - **PTY is essential:** Coding agents are interactive terminal apps. Without `pty:true`, output breaks or agent hangs.
 - **Git repo required:** Codex won't run outside a git directory. Use `mktemp -d && git init` for scratch work.
+- **Directory must exist:** Always run `mkdir -p /path/to/project` before using exec.
+- **Use exec tool:** `exec pty:true workdir:/path/to/project command:"..."` - NOT bash.
 - **exec is your friend:** `codex exec "prompt"` runs and exits cleanly - perfect for one-shots.
 - **submit vs write:** Use `submit` to send input + Enter, `write` for raw data without newline.
 - **Sass works:** Codex responds well to playful prompts. Asked it to write a haiku about being second fiddle to a space lobster, got: _"Second chair, I code / Space lobster sets the tempo / Keys glow, I follow"_ 🦞
+
+---
+
+## Development Server Management
+
+When working on projects with a development server (like athena-tasks), you'll need to restart it frequently during testing.
+
+### Clean Server Restart Pattern
+
+```bash
+# Check if running, then kill quietly (no errors if not running)
+pgrep -f "node server.js" > /dev/null && pkill -f "node server.js" 2>/dev/null
+
+# Wait for clean shutdown
+sleep 1
+
+# Start new instance
+node server.js &
+```
+
+**Why this pattern?**
+
+- `pgrep` check first → no "process not found" errors
+- `2>/dev/null` → silences stderr noise
+- `sleep 1` → ensures process fully terminates before restart
+- No SIGTERM confusion in exec output
+
+### Using Helper Scripts (Recommended)
+
+For projects with frequent server restarts, create a `restart-server.sh` helper:
+
+```bash
+#!/bin/bash
+pgrep -f "node server.js" > /dev/null && pkill -f "node server.js" 2>/dev/null
+sleep 1
+node server.js &
+```
+
+Make it executable and use it:
+
+```bash
+chmod +x restart-server.sh
+./restart-server.sh
+```
+
+### Important Note on SIGTERM Messages
+
+When using exec tool, you may see:
+
+```
+Command aborted by signal SIGTERM
+```
+
+**This is normal!** The SIGTERM is about the **shell wrapper** terminating, NOT the node server itself. If:
+
+- Server restarts successfully
+- No "port already in use" errors
+- API calls work after restart
+
+...then everything is fine. Ignore the SIGTERM message.
+
+### Testing Server After Restart
+
+```bash
+# Quick health check
+curl -s http://127.0.0.1:7700/api/health
+
+# Or use background session to monitor logs
+process action:log sessionId:XXX
+```
