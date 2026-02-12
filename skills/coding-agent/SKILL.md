@@ -330,6 +330,88 @@ git worktree remove /tmp/issue-99
 
 ---
 
+## Sequential Task Execution Workflow (CRITICAL - Updated 2026-02-11)
+
+**Rule:** Process tasks ONE AT A TIME, sequentially. No parallel execution of multiple tasks.
+
+**For Each Task:**
+
+1. **Start Claude Code** in project directory
+
+   ```bash
+   mkdir -p /path/to/project
+   exec pty:true workdir:/path/to/project background:true command:"claude"
+   ```
+
+2. **Send task to Claude Code** with clear task ID and requirements
+
+   ```bash
+   process action:write sessionId:XXX data:"Task ID: P1-01. [Full task description]"
+   process action:submit sessionId:XXX
+   ```
+
+3. **Monitor progress** periodically via process log
+
+   ```bash
+   process action:log sessionId:XXX
+   ```
+
+4. **Verify completion** - Check Claude Code's output and confirm all criteria met
+
+5. **Push to GitHub** if task completed successfully
+
+   ```bash
+   # Via Claude Code or direct git commands
+   git add .
+   git commit -m "Task P1-01: [Brief description]"
+   git push
+   ```
+
+6. **Notify Wilson via Telegram** with task status
+   - Use `message` tool with `action:send`, `to:538939197`
+   - Include task ID, completion status, and brief summary
+   - If error occurred, include error details
+
+7. **Kill Claude Code session**
+
+   ```bash
+   process action:kill sessionId:XXX
+   ```
+
+8. **Proceed to next task** - Only after current task is verified, pushed, and notified
+
+**Critical Rules:**
+
+- ✅ **One task at a time** - Never start the next task until current task is complete
+- ✅ **Maintain overall context** - Always keep the big picture and project plan in mind
+- ✅ **Verify before moving on** - Don't rush; check everything works
+- ✅ **Notify for each task** - Wilson needs to know what's happening, task by task
+- ❌ **No parallel execution** - Do NOT start multiple Claude Code sessions for different tasks
+- ❌ **No skipping verification** - Always confirm the task is actually done before pushing
+
+**Telegram Notification Format:**
+
+**Success:**
+
+```
+✅ Task P1-01 completed & verified: [Brief description of what was done]
+```
+
+**Error:**
+
+```
+❌ Task P1-01 failed: [Error description]
+```
+
+**Why this matters:**
+
+- Clear visibility into progress
+- Early detection of issues
+- Prevents cascading failures
+- Wilson stays informed and can intervene if needed
+
+---
+
 ## ⚠️ Rules
 
 1. **Always use pty:true** - coding agents need a terminal!
@@ -467,3 +549,174 @@ curl -s http://127.0.0.1:7700/api/health
 # Or use background session to monitor logs
 process action:log sessionId:XXX
 ```
+
+---
+
+## Edit Tool Failure Prevention (Learned 2026-02-11)
+
+**Problem:** The `edit` tool fails with:
+
+```
+Could not find exact text in /path/to/file. The old text must match exactly including all whitespace and newlines.
+```
+
+**Root Causes:**
+
+- File modified between read and edit
+- Whitespace mismatch (tabs vs spaces, line endings)
+- Short search patterns appearing multiple times
+- Multiple edits in sequence changing file structure
+
+**Prevention Checklist (Before Every Edit):**
+
+- [ ] Read file to verify current state
+- [ ] Use grep -n to find exact line numbers
+- [ ] Include sufficient context in oldText (3-5 lines)
+- [ ] Use unique anchors (not common patterns)
+- [ ] Verify no conflicting edits pending
+
+**Tools Preference Order:**
+
+1. `edit` — Precise small changes (first choice)
+2. `sed` — Bulk replacements or when edit fails
+3. `write` — Complete file rewrites (last resort)
+
+**When Edit Fails:**
+
+1. Read file again to get current state
+2. Use grep to find where target is now
+3. Adjust strategy (better anchor, sed, more context)
+4. Verify before committing
+
+**Documentation:** `/home/athena/.openclaw/workspace/athena-tasks/LESSONS.md` (full examples)
+
+---
+
+## 🚀 Claude Code: Relentless Execution Mode (Updated 2026-02-11)
+
+**PHILOSOPHY:** Never stop. Never give up. The goal is absolute completion. Be relentless. Be proactive. Anticipate problems before they happen.
+
+### High-Performance Workflow
+
+```bash
+# Step 1: Launch Claude Code
+mkdir -p /path/to/project
+exec pty:true workdir:/path/to/project background:true command:"claude"
+
+# Step 2: Send ruthless task - ALL requirements upfront
+process action:write sessionId:XXX data:"Task: [Clear goal]. Requirements: [bullet list]. Work autonomously. Test everything. Do not ask trivial questions. Keep pushing until done."
+process action:submit sessionId:XXX
+
+# Step 3: AGGRESSIVE monitoring - check every 10-15 seconds
+process action:log sessionId:XXX
+
+# Step 4: If Claude stalls - nudge immediately
+process action:write sessionId:XXX data:"Continue. Don't stop."
+process action:submit sessionId:XXX
+
+# Step 5: Only kill when TRULY finished (tested and working)
+process action:kill sessionId:XXX
+```
+
+### Speed Optimization Rules
+
+**1. Be Ruthless with Context**
+
+- Use `/compact` every 15-20 minutes on long tasks
+- Use `/clear` when switching to unrelated task types
+- If response slows down or Claude forgets → `/compact` immediately
+
+**2. Never Wait for Decisions**
+
+- When Claude asks "Should I use X or Y?" → Decide instantly
+- Use best judgment - pick the more robust option and keep moving
+- If unsure, choose one and note it can be changed later
+
+**3. Chain Commands Relentlessly**
+
+- Chain everything: `git add . && git commit -m "msg" && git push`
+- Don't wait between steps - do it all at once
+
+**4. Test Automatically**
+
+- Include testing requirements in every task from the start
+- Never ask for permission to test - make it automatic
+
+### Proactive Problem Prevention
+
+**Common Issues & Instant Fixes:**
+
+| Issue                | Proactive Solution                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| Dependencies missing | "If deps missing, run 'npm install' automatically. Don't ask."                         |
+| Port in use          | "If port is in use, kill the process and restart. Don't ask."                          |
+| Git conflicts        | "On conflicts: accept 'theirs' for binaries, keep recent for code. Fix automatically." |
+| Import errors        | "If import errors: install or create module, fix path, continue."                      |
+| Type errors          | "On TS errors: use 'any' with TODO comment temporarily. Keep going."                   |
+
+### Error Recovery Strategy
+
+**When Claude hits an error:**
+
+1. **Try instant fix** (e.g., `npm install <module>`)
+2. **Try alternative approach** if first fix fails
+3. **Investigate root cause** if still failing
+4. **NEVER STOP** - Keep trying different approaches
+
+**Rule:** Errors are stepping stones, not walls. Keep pushing until it works.
+
+### Aggressive Monitoring
+
+**Check intervals:**
+
+- First 2 minutes: Every 10 seconds
+- Next 10 minutes: Every 30 seconds
+- After 12 minutes: Every 60 seconds
+
+**Watch for:**
+
+- 🟢 Good: Progress messages, code being written, no errors
+- 🟡 Warning: Same message repeated, no output for 60s, asking "Should I...?"
+- 🔴 Bad: Errors not fixed, looping, no output for 120s
+
+**Respond:**
+
+- 🟡 Yellow: Nudge → "Continue. Don't stop."
+- 🔴 Red: Redirect → "You're stuck. Try this alternative approach: [X]"
+- 🔴 Looping: `/clear` and restart with fresh approach
+
+### Task Completion Verification
+
+**Before killing Claude Code, verify:**
+
+- [ ] All task requirements completed
+- [ ] Tests pass (if applicable)
+- [ ] Code compiles/builds without errors
+- [ ] Functionality verified (manually tested)
+- [ ] Git committed and pushed
+- [ ] No critical bugs
+
+**Only THEN kill:**
+
+```bash
+process action:kill sessionId:XXX
+```
+
+### When to Escalate
+
+**Signal Wilson when:**
+
+- Stuck for >5 minutes despite nudges
+- Critical ambiguity affecting architecture
+- Security concern (need approval)
+- Approach debate (multiple valid paths)
+- External dependency issue (can't fix)
+
+### Full Documentation
+
+See `/home/athena/.openclaw/workspace/CLAUDE-CODE-OPTIMIZED.md` for complete guide including:
+
+- Detailed error recovery examples
+- Sequential task workflow
+- Common error fixes reference
+- Proactive problem prevention patterns
