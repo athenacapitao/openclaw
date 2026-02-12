@@ -720,3 +720,56 @@ See `/home/athena/.openclaw/workspace/CLAUDE-CODE-OPTIMIZED.md` for complete gui
 - Sequential task workflow
 - Common error fixes reference
 - Proactive problem prevention patterns
+
+---
+
+## ⚠️ Git Error Recovery (Automatic)
+
+**CRITICAL:** All git operations MUST specify working directory to avoid pathspec errors.
+
+### Auto-Recovery Mechanism
+
+When git commands fail (pathspec errors, repository errors), automatically:
+
+1. **Detect error** from exec output
+2. **Navigate to correct project directory**
+3. **Retry command** with proper path prefix
+4. **Update documentation** to prevent recurrence
+
+### Git Best Practices
+
+```bash
+# ✅ CORRECT - Always use cd prefix
+cd /path/to/project && git add file.js && git commit -m "msg" && git push
+
+# ❌ WRONG - No directory specified
+git add file.js && git commit -m "msg"  # Fails if wrong directory
+```
+
+### For exec Commands
+
+```bash
+# Always chain cd with git commands
+cd /home/athena/.openclaw/workspace/athena-tasks && \
+  git add ui.html && \
+  git commit -m "feat: Add feature" && \
+  git push origin main
+```
+
+### For Claude Code Sessions
+
+- **Always use `workdir:/path/to/project`** when starting session
+- Example: `exec pty:true workdir:/path/to/project background:true command:"claude"`
+- Never assume current directory is correct
+
+### Common Git Errors
+
+| Error                                  | Cause           | Fix                                    |
+| -------------------------------------- | --------------- | -------------------------------------- |
+| `pathspec 'X' did not match any files` | Wrong directory | Use `cd /correct/path && git add file` |
+| `not a git repository`                 | No .git folder  | `cd /correct/path` or `git init`       |
+| `Permission denied`                    | No write access | Check GitHub credentials/permissions   |
+
+**Full Reference:** `/home/athena/.openclaw/workspace/GIT-ERROR-RECOVERY.md`
+
+**Key Rule:** Never run git commands without specifying the working directory.
