@@ -26,6 +26,25 @@ metadata:
 
 Track blog and RSS/Atom feed updates with the `blogwatcher` CLI.
 
+## When to Use This Skill
+
+**Use when:**
+
+- Tracking blog/RSS/Atom feed updates
+- Adding, removing, or listing monitored blogs
+- Scanning for new articles or marking them read
+
+**Don't use when:**
+
+- Need to read/reply to email → use `athena-email`
+- Need web search or general browsing → not a web browser
+- Need news aggregation beyond RSS → consider other tools
+
+**Success Criteria:**
+
+- Blogs tracked and scan returns results
+- Articles listed with correct read/unread status
+
 Install
 
 - Go: `go install github.com/Hyaxia/blogwatcher/cmd/blogwatcher@latest`

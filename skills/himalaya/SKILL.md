@@ -26,6 +26,26 @@ metadata:
 
 Himalaya is a CLI email client that lets you manage emails from the terminal using IMAP, SMTP, Notmuch, or Sendmail backends.
 
+## When to Use This Skill
+
+**Use when:**
+
+- Need raw himalaya CLI commands for email operations
+- Setting up or configuring himalaya email accounts
+- Debugging email delivery or IMAP/SMTP issues
+- Using himalaya features not covered by athena-email skill
+
+**Don't use when:**
+
+- Managing Athena's email workflow (thread tracking, CC rules) → use `athena-email`
+- Need calendar/meeting scheduling → use `athena-email`
+- Working with non-email tasks → use appropriate skill
+
+**Success Criteria:**
+
+- Himalaya command executes successfully
+- Email listed, read, sent, or managed as expected
+
 ## References
 
 - `references/configuration.md` (config file setup + IMAP/SMTP authentication)
@@ -255,3 +275,11 @@ RUST_LOG=trace RUST_BACKTRACE=1 himalaya envelope list
 - Message IDs are relative to the current folder; re-list after folder changes.
 - For composing rich emails with attachments, use MML syntax (see `references/message-composition.md`).
 - Store passwords securely using `pass`, system keyring, or a command that outputs the password.
+
+### Common Pitfalls
+
+**What NOT to do:**
+
+- Forgetting `--all` flag when reply-all is needed: drops recipients
+- Using wrong message IDs after folder change: IDs are relative to current folder
+- Storing passwords in plaintext config: use `pass`, keyring, or secure command

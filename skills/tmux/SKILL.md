@@ -9,6 +9,27 @@ metadata:
 
 Use tmux only when you need an interactive TTY. Prefer exec background mode for long-running, non-interactive tasks.
 
+## When to Use This Skill
+
+**Use when:**
+
+- Running interactive CLI tools that need a TTY (Python REPL, Claude Code, etc.)
+- Orchestrating multiple coding agents in parallel
+- Need persistent terminal sessions that survive disconnection
+- Sending keystrokes to or scraping output from interactive programs
+
+**Don't use when:**
+
+- Running non-interactive background tasks → use exec background mode
+- Simple one-shot commands → use bash directly
+- On Windows without WSL: tmux requires macOS or Linux
+
+**Success Criteria:**
+
+- tmux session created and accessible
+- Commands sent and output captured successfully
+- Monitor commands printed for user reference
+
 ## Quickstart (isolated socket, exec tool)
 
 ```bash
@@ -119,6 +140,15 @@ tmux -S "$SOCKET" capture-pane -p -t agent-1 -S -500
 - Kill a session: `tmux -S "$SOCKET" kill-session -t "$SESSION"`.
 - Kill all sessions on a socket: `tmux -S "$SOCKET" list-sessions -F '#{session_name}' | xargs -r -n1 tmux -S "$SOCKET" kill-session -t`.
 - Remove everything on the private socket: `tmux -S "$SOCKET" kill-server`.
+
+### Common Pitfalls
+
+**What NOT to do:**
+
+- Sending text + Enter in same send-keys for TUI apps: causes paste/multi-line issues
+- Forgetting to use isolated socket: conflicts with user's tmux sessions
+- Not using PYTHON_BASIC_REPL=1 for Python: non-basic REPL breaks send-keys
+- Using spaces in session names: causes targeting issues
 
 ## Helper: wait-for-text.sh
 

@@ -9,6 +9,47 @@ description: Host security hardening and risk-tolerance configuration for OpenCl
 
 Assess and harden the host running OpenClaw, then align it to a user-defined risk tolerance without breaking access. Use OpenClaw security tooling as a first-class signal, but treat OS hardening as a separate, explicit set of steps.
 
+## When to Use This Skill
+
+**Use when:**
+
+- Running security audits on the OpenClaw host
+- Checking firewall, SSH, and port exposure status
+- Reviewing risk posture and setting security profile
+- Scheduling periodic security checks via cron
+- Checking OpenClaw version and update status
+
+**Don't use when:**
+
+- Need deep skill/plugin supply-chain audit → use `clawdstrike`
+- Task is about code development → use `coding-agent`
+- Task is about GitHub security (Dependabot, secret scanning) → use `github`
+- Need to manage emails or calendar → use `athena-email`
+
+**Success Criteria:**
+
+- Security audit completed with posture report
+- Risk profile established and documented
+- Remediation plan provided (if issues found)
+- Periodic audit scheduled (if user approves)
+
+### Common Pitfalls
+
+**What NOT to do:**
+
+- Modifying remote access settings without confirming how user connects: can lock yourself out
+- Running `openclaw security audit --fix` without showing the plan first: unexpected changes
+- Inventing CLI flags that don't exist: stick to documented commands only
+- Skipping the model self-check: suboptimal reasoning on complex security decisions
+- Creating cron jobs without explicit user approval: unauthorized scheduled tasks
+- Logging secrets in audit output: always redact tokens, passwords, credentials
+
+**Alternative:**
+
+- Always show remediation plan before any changes
+- Use only documented `openclaw` commands and flags
+- Require explicit approval for every state-changing action
+
 ## Core rules
 
 - Recommend running this skill with a state-of-the-art model (e.g., Opus 4.5, GPT 5.2+). The agent should self-check the current model and suggest switching if below that level; do not block execution.

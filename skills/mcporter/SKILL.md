@@ -26,6 +26,26 @@ metadata:
 
 Use `mcporter` to work with MCP servers directly.
 
+## When to Use This Skill
+
+**Use when:**
+
+- Listing, calling, or managing MCP servers and tools
+- Configuring MCP server connections (HTTP or stdio)
+- Running OAuth authentication for MCP servers
+- Generating CLI wrappers or TypeScript types from MCP schemas
+
+**Don't use when:**
+
+- Need direct API calls without MCP → use curl or httpie
+- Managing GitHub directly → use `github` skill
+- Need general coding → use `coding-agent`
+
+**Success Criteria:**
+
+- MCP tool call returns expected result
+- Server listed with correct schema
+
 Quick start
 
 - `mcporter list`
@@ -59,3 +79,11 @@ Notes
 
 - Config default: `./config/mcporter.json` (override with `--config`).
 - Prefer `--output json` for machine-readable results.
+
+### Common Pitfalls
+
+**What NOT to do:**
+
+- Calling tools without checking schema first: wrong parameter names cause errors
+- Forgetting `--output json` for scripting: human-readable output breaks parsing
+- Running daemon commands without checking status: duplicate daemons cause conflicts

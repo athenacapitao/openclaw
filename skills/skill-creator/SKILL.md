@@ -7,6 +7,27 @@ description: Create or update AgentSkills. Use when designing, structuring, or p
 
 This skill provides guidance for creating effective skills.
 
+## When to Use This Skill
+
+**Use when:**
+
+- Creating a new skill from scratch (init, structure, package)
+- Updating or iterating on an existing skill's SKILL.md
+- Packaging a skill for distribution (.skill file)
+- Need guidance on skill design patterns and best practices
+
+**Don't use when:**
+
+- Using an existing skill (just use that skill directly)
+- Need to write application code → use `coding-agent`
+- Need project scaffolding (not a skill) → use `coding-agent`
+
+**Success Criteria:**
+
+- Skill directory created with proper structure
+- SKILL.md has valid frontmatter and clear instructions
+- Skill passes validation and packages successfully
+
 ## About Skills
 
 Skills are modular, self-contained packages that extend Codex's capabilities by providing
@@ -368,3 +389,12 @@ After testing the skill, users may request improvements. Often this happens righ
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated
 4. Implement changes and test again
+
+### Common Pitfalls
+
+**What NOT to do:**
+
+- Creating README.md or CHANGELOG.md in skill directory: skills should only contain essential files
+- Putting "When to Use" info in body instead of description frontmatter: body loads only after triggering
+- Making SKILL.md too verbose (>500 lines): wastes context window
+- Including setup/testing documentation: that's user-facing, not for the agent
